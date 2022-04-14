@@ -1,0 +1,133 @@
+#+TITLE: storetheindex. Or "who has this CID?"
+#+SUBTITLE:[[https://cid.contact/][ cid.contact]]
+
+* Prelude
+Please interrupt with questions!
+
+* Problem Statement
+- Filecoin
+  - Blockchain using proof of storage.
+  - A network of storage providers that store content.
+  - You give data to a storage provider, it can return that data to you in the future.
+- We have a lot of content on Filecoin (72 PiB: [[https://storage.filecoin.io/][storage.filecoin.io]])
+- We are going to have even more in the future!
+- This means a lot of CIDs
+  - What is a CID? (a hash of some content that serves as its ID)
+- How do we keep track of who is storing what? Who has this CID?
+** DHT? IPFS DHT is not ready for this number of CIDs /...(yet)/
+- Roughly ~3K reachable nodes on DHT
+- At $ >10^{15 }$ (projected) CIDs each node would have to store roughly $ 3*10^{11 }$ CIDS.
+- Each CID is roughly 32 bytes
+- $10^{12}$ Bytes of data per node (1TiB)
+** Heterogeneous nodes on a DHT are hard
+- What if we could have bigger machines join the DHT network?
+  - How to mitigate against Sybil attacks?
+    - A big machine may be indistinguishable from a bunch of little machines
+    - What if this machine misbehaves?
+  - Open problem!
+** Our own federated network
+- Enter, storetheindex.
+- Side steps the Sybil attack by being a permissioned network.
+  - The federation decides and knows who participates.
+
+* Introduction
+storetheindex is a database that can figure out who (e.g. a Filecoin storage provider) can provide a CID. Think of it as a big hashmap to goes from =CID -> instructions to fetch data=.
+** Example:
+Who can provide data referenced by this CID =bafybeigvgzoolc3drupxhlevdp2ugqcrbcsqfmcek2zxiw5wctk3xjpjwy=?
+#+begin_src bash
+curl 'https://cid.contact/cid/bafybeigvgzoolc3drupxhlevdp2ugqcrbcsqfmcek2zxiw5wctk3xjpjwy' | jq '.MultihashResults[].ProviderResults[].Provider.ID'
+#+end_src
+
+#+RESULTS:
+| 12D3KooWDaha2JyiYKqQQbobTva1vX6cnP5HrvwUsv5KPvAQJ1ST |
+| 12D3KooWDaha2JyiYKqQQbobTva1vX6cnP5HrvwUsv5KPvAQJ1ST |
+| 12D3KooWM4wsQ3kdd8CDHiVDQthU9JZ9KqsxSdSQT2xj6TAdDth5 |
+| 12D3KooW9yi2xLhXds9HC4x9vRN99mphq6ds8qN2YRf8zks1F32G |
+| 12D3KooWDMJSprsuxhjJVnuQQcyibc5GxanUUxpDzHU74rhknqkU |
+
+
+*(a hash of some content that serves as its ID) Where does the data come from? On replication and eventual consistency
+storetheindex gets its data from providers themselves.
+
+- Each provider publishes an /Advertisement/ that contains the /entries/ (aka CIDs) that it knows it can provide.
+- The /Advertisement/ links to a previous /Advertisement/.
+- Forms a chain (like a blockchain!)
+** Example:
+An Advertisement looks roughly like:
+#+begin_src
+type Advertisement {
+  entries: Array<CID>,
+  previousAdvertisement: Advertisement,
+  signature: bytes
+}
+#+end_src
+** Easy Sequential histories (blockchain)
+The Advertisement chain gives us a sequential history.
+
+Example:
+#+begin_src
+A <- B <- C
+#+end_src
+We know that /Advertisement A/ happened before /Advertisement B/. No matter what order we get the individual advertisements.
+** Eventual consistency
+storetheindex needs to walk the chain from oldest Advertisement to newest.
+- Defined order of the walk.
+- At the end of the walk we've processed all the changes from a provider.
+
+- A new storetheindex node can come up and, after some time, be in the exact state as another storetheindex node that has been up the whole time.
+
+** New content synchronization
+When a provider has new entries it can provide (or wants to tell storetheindex about entries it no longer has) it creates a new /Advertisement/ with the information and a link to the last /Advertisement/.
+
+The provider publishes the /CID/ of that /Advertisement/ over [[https://github.com/libp2p/specs/tree/master/pubsub/gossipsub][GossipSub]] (A p2p pubsub implementation).
+
+storetheindex sees the new /CID of the/ /Advertisement/ and starts the ingest process. Ingesting the previous linked /Advertisement/ if it hasn't ingested that one yet (recursively).
+
+*** Pull model
+- This is a pull model of synchronization.
+- storetheindex can defer ingest if it's down, lost a message, or is heavily loaded with queries.
+- Allows a new indexer to come up seamlessly
+*** No /read your writes/
+By design!
+
+- It's hard to scale systems that support reading your writes efficiently.
+- In this problem domain, slightly out of date answers are /okay/.
+
+* Federation
+- Everything we've covered so far applies equally to one storetheindex node and N storetheindex nodes.
+- Nodes can be in charge of responding to certain subsets of the CID address space.
+  - Can be configured to be overlapping for redundancy
+** Not only storetheindex
+Storetheindex is just one implementation, but as long as a node can ingest the /Advertisement/ chain and expose the same lookup interface any implementation could work and join the federation.
+
+* Scaling made easy
+- By leveraging the hash property of CIDs we can evenly distribute the load amongst a set of nodes.
+- A peer can know exactly which node is responsible for a CID and ask them directly.
+* How does this enable IPFS <-> Filecoin interop?
+- Filecoin incentivizes storage
+- IPFS defines a system of addressing and fetching data
+- The IPFS client can ask storetheindex for the provider for a given CID.
+  - Then fetch the content from that provider directly.
+- Works today on IPFS via [[https://github.com/libp2p/hydra-booster][Hydra Booster]]
+  - A node on the IPFS DHT that can query from other sources to return results faster.
+  - No change required for clients
+  - It queries storetheindex
+* Useful takeaways that apply across domains
+** Replication of sequential linked histories is easy.
+- A blockchain inherently defines a sequential history
+  - e.g. A <- B <- C.
+     A must happen before B which must happen before C. This is guaranteed in the structure of the chain. Each block can be referenced by its content hash. And each block references the previous block by its content hash.
+  - To replicate we start with the latest block we know about and traverse until we reach a block we've seen before.
+  - Blocks don't have to come from one source!
+** If you can partition by hashes, you should
+- simplifies the partitioning strategy
+- will be uniform
+- Doesn't always work
+  - Objects need to be uniform size
+  - e.g. a DB of clients and invoices will not partition evenly with just hashes (without scatter/gather queries).
+
+* Where can I learn more? + Questions
+- https://github.com/filecoin-project/storetheindex
+- https://cid.contact/
+
+** Your questions!
