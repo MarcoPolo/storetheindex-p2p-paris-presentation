@@ -94,11 +94,6 @@ By design!
 - In this problem domain, slightly out of date answers are /okay/.
 
 
-** Efficient Indexed Data
-https://github.com/vmx/storethehash in Rust. [[https://github.com/hannahhoward/go-storethehash][Go version]]
-
--
-
 * Federation
 - Everything we've covered so far applies equally to one storetheindex node and N storetheindex nodes.
 - Nodes can be in charge of responding to certain subsets of the CID address space.
@@ -132,8 +127,20 @@ Storetheindex is just one implementation, but as long as a node can ingest the /
   - Objects need to be uniform size
   - e.g. a DB of clients and invoices will not partition evenly with just hashes (without scatter/gather queries).
 
+* storetheindex and you
+- I store content addressed data, and I want to tell people about it:
+  - If you're a storage provider running Lotus, you can already
+  The
+  You should run a index-provider locally (as a library or separate service)
+
 * Where can I learn more? + Questions
 - https://github.com/filecoin-project/storetheindex
 - https://cid.contact/
 
 ** Your questions!
+
+* Bonus Content
+** Efficient Indexed Data
+https://github.com/vmx/storethehash in Rust. [[https://github.com/hannahhoward/go-storethehash][Go version]]
+
+-
