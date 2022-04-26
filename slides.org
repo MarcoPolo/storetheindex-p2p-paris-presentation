@@ -93,6 +93,12 @@ By design!
 - It's hard to scale systems that support reading your writes efficiently.
 - In this problem domain, slightly out of date answers are /okay/.
 
+
+** Efficient Indexed Data
+https://github.com/vmx/storethehash in Rust. [[https://github.com/hannahhoward/go-storethehash][Go version]]
+
+-
+
 * Federation
 - Everything we've covered so far applies equally to one storetheindex node and N storetheindex nodes.
 - Nodes can be in charge of responding to certain subsets of the CID address space.
