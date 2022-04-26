@@ -127,20 +127,25 @@ Storetheindex is just one implementation, but as long as a node can ingest the /
   - Objects need to be uniform size
   - e.g. a DB of clients and invoices will not partition evenly with just hashes (without scatter/gather queries).
 
-* storetheindex and you
-- I store content addressed data, and I want to tell people about it:
-  - If you're a storage provider running Lotus, you can already
-  The
-  You should run a index-provider locally (as a library or separate service)
+* storetheindex and /you/
+** I'd like to propose/make changes
+- Please file an issue on [[https://github.com/filecoin-project/storetheindex][storetheindex repo]] to discuss any changes.
+- You can reach out to us on the ~#storetheindex~ channel in Filecoin Slack.
+**  I'd like to join the indexer federation.
+Let's chat!
+ - It is storage intensive, and possibly bandwidth intensive. On the plus side, queries are easily cacheable.
+ - You should be able to provide some decent uptime (> 99.9%). We hope to relax this requirement in the future.
+**  I store content addressed data, and I want to tell people about it:
+- If you're a storage provider running Lotus, You already have this ability!
+- Otherwise look at https://github.com/filecoin-project/index-provider, and let us know, we'd be happy to help unblock you and get you started.
 
-* Where can I learn more? + Questions
+* Where can I follow along? + Questions
 - https://github.com/filecoin-project/storetheindex
 - https://cid.contact/
-
+- These slides: https://github.com/MarcoPolo/storetheindex-p2p-paris-presentation
 ** Your questions!
 
 * Bonus Content
-** Efficient Indexed Data
+** Efficient Hash Indexed Data:
+On what storetheindex uses as its underlying datastore.
 https://github.com/vmx/storethehash in Rust. [[https://github.com/hannahhoward/go-storethehash][Go version]]
-
--
