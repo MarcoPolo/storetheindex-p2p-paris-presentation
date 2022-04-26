@@ -2,15 +2,8 @@
 
 * Slide Time tracking
 :LOGBOOK:
-CLOCK: [2022-04-26 Tue 12:27]
+CLOCK: [2022-04-26 Tue 12:27]--[2022-04-26 Tue 16:40] =>  4:13
 CLOCK: [2022-04-14 Thu 11:00]--[2022-04-14 Thu 12:15] =>  1:15
 :END:
 * Prompt
-Present storetheindex, a distributed and eventually consistent database. Explain what that means, what properties it holds, and how it enables IPFS ↔ Filecoin interop.
-
-* TODO
-- [ ] Follow theme of how to contribute to the project
-- [ ] Explain storethehash
-
-* storethehash notes
- https://github.com/vmx/storethehash
+Present storetheindex, a distributed and eventually consistent database. Explain what that means, what properties it holds, and how it enables IPFS ↔ Filecoin interop. And how folks can contribute

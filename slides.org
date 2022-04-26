@@ -5,7 +5,7 @@
 Please interrupt with questions!
 
 * Problem Statement
-- Filecoin
+- Filecoin [[file:assets/filecoin-logo.svg]]
   - Blockchain using proof of storage.
   - A network of storage providers that store content.
   - You give data to a storage provider, it can return that data to you in the future.
@@ -14,7 +14,9 @@ Please interrupt with questions!
 - This means a lot of CIDs
   - What is a CID? (a hash of some content that serves as its ID)
 - How do we keep track of who is storing what? Who has this CID?
-** DHT? IPFS DHT is not ready for this number of CIDs /...(yet)/
+** DHT?
+IPFS DHT is not ready for this number of CIDs /...(yet)/
+
 - Roughly ~3K reachable nodes on DHT
 - At $ >10^{15 }$ (projected) CIDs each node would have to store roughly $ 3*10^{11 }$ CIDS.
 - Each CID is roughly 32 bytes
@@ -32,6 +34,10 @@ Please interrupt with questions!
 
 * Introduction
 storetheindex is a database that can figure out who (e.g. a Filecoin storage provider) can provide a CID. Think of it as a big hashmap to goes from =CID -> instructions to fetch data=.
+** Illustration:
+#+ATTR_HTML: :width 50% :height 50%
+[[file:assets/ecosystem.png]]
+
 ** Example:
 Who can provide data referenced by this CID =bafybeigvgzoolc3drupxhlevdp2ugqcrbcsqfmcek2zxiw5wctk3xjpjwy=?
 #+begin_src bash
@@ -46,12 +52,17 @@ curl 'https://cid.contact/cid/bafybeigvgzoolc3drupxhlevdp2ugqcrbcsqfmcek2zxiw5wc
 | 12D3KooWDMJSprsuxhjJVnuQQcyibc5GxanUUxpDzHU74rhknqkU |
 
 
-*(a hash of some content that serves as its ID) Where does the data come from? On replication and eventual consistency
+* Where does the data come from? On replication and eventual consistency
 storetheindex gets its data from providers themselves.
 
 - Each provider publishes an /Advertisement/ that contains the /entries/ (aka CIDs) that it knows it can provide.
 - The /Advertisement/ links to a previous /Advertisement/.
 - Forms a chain (like a blockchain!)
+
+** Illustrated
+#+ATTR_HTML: :width 50% :height 50%
+[[file:assets/adchain.png]]
+
 ** Example:
 An Advertisement looks roughly like:
 #+begin_src
@@ -120,24 +131,26 @@ Storetheindex is just one implementation, but as long as a node can ingest the /
      A must happen before B which must happen before C. This is guaranteed in the structure of the chain. Each block can be referenced by its content hash. And each block references the previous block by its content hash.
   - To replicate we start with the latest block we know about and traverse until we reach a block we've seen before.
   - Blocks don't have to come from one source!
+    We could fetch the Ads from a CDN rather than a storage provider.
 ** If you can partition by hashes, you should
-- simplifies the partitioning strategy
-- will be uniform
+- Simplifies the partitioning strategy
+- Will be uniform
 - Doesn't always work
   - Objects need to be uniform size
   - e.g. a DB of clients and invoices will not partition evenly with just hashes (without scatter/gather queries).
 
 * storetheindex and /you/
 ** I'd like to propose/make changes
-- Please file an issue on [[https://github.com/filecoin-project/storetheindex][storetheindex repo]] to discuss any changes.
+- Please file an issue on [[https://github.com/filecoin-project/storetheindex][storetheindex repo]] to discuss changes.
 - You can reach out to us on the ~#storetheindex~ channel in Filecoin Slack.
-**  I'd like to join the indexer federation.
+** I'd like to join the indexer federation.
 Let's chat!
  - It is storage intensive, and possibly bandwidth intensive. On the plus side, queries are easily cacheable.
  - You should be able to provide some decent uptime (> 99.9%). We hope to relax this requirement in the future.
-**  I store content addressed data, and I want to tell people about it:
+** I store content addressed data, and I want to tell people about it:
 - If you're a storage provider running Lotus, You already have this ability!
-- Otherwise look at https://github.com/filecoin-project/index-provider, and let us know, we'd be happy to help unblock you and get you started.
+- Otherwise look at https://github.com/filecoin-project/index-provider. You'll need to use this as a library to create and publish Advertisements.
+  - Let us know! we'd be happy to help unblock you and get you started.
 
 * Where can I follow along? + Questions
 - https://github.com/filecoin-project/storetheindex
