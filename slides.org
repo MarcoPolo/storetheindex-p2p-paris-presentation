@@ -1,15 +1,18 @@
 #+TITLE: storetheindex. Or "who has this CID?"
 #+SUBTITLE:[[https://cid.contact/][ cid.contact]]
 
-* Prelude
-Please interrupt with questions!
+* storetheindex
+A distributed database for finding content.
+
+- Given I have this CID =bafybeigvgzoolc3drupxhlevdp2ugqcrbcsqfmcek2zxiw5wctk3xjpjwy=
+  who has the data?
 
 * Problem Statement
 - Filecoin [[file:assets/filecoin-logo.svg]]
   - Blockchain using proof of storage.
   - A network of storage providers that store content.
   - You give data to a storage provider, it can return that data to you in the future.
-- We have a lot of content on Filecoin (72 PiB: [[https://storage.filecoin.io/][storage.filecoin.io]])
+- We have a lot of content on Filecoin (80 PiB: [[https://storage.filecoin.io/][storage.filecoin.io]])
 - We are going to have even more in the future!
 - This means a lot of CIDs
   - What is a CID? (a hash of some content that serves as its ID)
@@ -17,10 +20,10 @@ Please interrupt with questions!
 ** DHT?
 IPFS DHT is not ready for this number of CIDs /...(yet)/
 
-- Roughly ~3K reachable nodes on DHT
-- At $ >10^{15 }$ (projected) CIDs each node would have to store roughly $ 3*10^{11 }$ CIDS.
+- Roughly ~20K reachable nodes on DHT
+- At $ >10^{15 }$ (projected) CIDs each node would have to store roughly $ 5*10^{10 }$ CIDS.
 - Each CID is roughly 32 bytes
-- $10^{12}$ Bytes of data per node (1TiB)
+- 100s of GiB of data per node
 ** Heterogeneous nodes on a DHT are hard
 - What if we could have bigger machines join the DHT network?
   - How to mitigate against Sybil attacks?
@@ -90,7 +93,7 @@ storetheindex needs to walk the chain from oldest Advertisement to newest.
 ** New content synchronization
 When a provider has new entries it can provide (or wants to tell storetheindex about entries it no longer has) it creates a new /Advertisement/ with the information and a link to the last /Advertisement/.
 
-The provider publishes the /CID/ of that /Advertisement/ over [[https://github.com/libp2p/specs/tree/master/pubsub/gossipsub][GossipSub]] (A p2p pubsub implementation).
+The provider publishes the /CID/ of that /Advertisement/ over [[https://github.com/libp2p/specs/tree/master/pubsub/gossipsub][GossipSub]] (A libp2p pubsub implementation).
 
 storetheindex sees the new /CID of the/ /Advertisement/ and starts the ingest process. Ingesting the previous linked /Advertisement/ if it hasn't ingested that one yet (recursively).
 
@@ -129,10 +132,10 @@ Storetheindex is just one implementation, but as long as a node can ingest the /
 - A blockchain inherently defines a sequential history
   - e.g. A <- B <- C.
      A must happen before B which must happen before C. This is guaranteed in the structure of the chain. Each block can be referenced by its content hash. And each block references the previous block by its content hash.
-  - To replicate we start with the latest block we know about and traverse until we reach a block we've seen before.
+  - To replicate we start with the latest block we know about and traverse until we reach a block we've processed before.
   - Blocks don't have to come from one source!
     We could fetch the Ads from a CDN rather than a storage provider.
-** If you can partition by hashes, you should
+** If you can partition by hashes, you should.
 - Simplifies the partitioning strategy
 - Will be uniform
 - Doesn't always work
@@ -143,6 +146,7 @@ Storetheindex is just one implementation, but as long as a node can ingest the /
 ** I'd like to propose/make changes
 - Please file an issue on [[https://github.com/filecoin-project/storetheindex][storetheindex repo]] to discuss changes.
 - You can reach out to us on the ~#storetheindex~ channel in Filecoin Slack.
+- Take a look at the standard spec: https://github.com/filecoin-project/FIPs/pull/341/files
 ** I'd like to join the indexer federation.
 Let's chat!
  - It is storage intensive, and possibly bandwidth intensive. On the plus side, queries are easily cacheable.
