@@ -1,4 +1,5 @@
 #+TITLE: storetheindex. Or "who has this CID?"
+#+AUTHOR: Marco Munizaga
 #+SUBTITLE:[[https://cid.contact/][ cid.contact]]
 
 * storetheindex
